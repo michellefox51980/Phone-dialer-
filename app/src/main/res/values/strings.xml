@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">ClarityDial</string>
+    <string name="nav_keypad">Keypad</string>
+    <string name="nav_recents">Recents</string>
+    <string name="nav_messages">Messages</string>
+    <string name="nav_contacts">Contacts</string>
+    <string name="nav_shield">Call Shield</string>
+    <string name="dial_call_action">Call</string>
+    <string name="dial_message_action">Message</string>
+    <string name="dial_backspace_desc">Delete last digit</string>
+    <string name="dial_clear_desc">Clear number</string>
+    <string name="shield_status_active">Automated Call Shield Active</string>
+    <string name="shield_status_paused">Call Shield Paused</string>
+    <string name="shield_simulate_call">Simulate Incoming Call</string>
+    <string name="contacts_add_new">Add Contact</string>
+    <string name="messages_new_thread">New Message</string>
+    <string name="messages_send_sms">Send via SMS</string>
+</resources>

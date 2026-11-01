@@ -1,0 +1,6 @@
+{
+  "summary":  "Updated implementation plan to add Google Play compliant Default Text Messaging (sms: / smsto: intent handling, pre-filled recipient and draft body, optional carrier SMS handoff toggle, and an Incoming Text Simulator with Quick-Reply Templates) alongside Default Phone Dialer, Bluetooth Audio Routing, and App Settings.",
+  "updatedAt":  "2026-11-01T11:40:28.346238186Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

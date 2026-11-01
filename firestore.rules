@@ -1,0 +1,213 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isValidContact(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+             data.phoneNumber is string && data.phoneNumber.size() >= 1 && data.phoneNumber.size() <= 40 &&
+             data.normalizedNumber is string && data.normalizedNumber.size() <= 30 &&
+             data.label is string && data.label.size() >= 1 && data.label.size() <= 30 &&
+             data.email is string && data.email.size() <= 160 &&
+             data.organization is string && data.organization.size() <= 120 &&
+             data.isVip is bool &&
+             data.avatarColorIndex is int && data.avatarColorIndex >= 0 && data.avatarColorIndex <= 20 &&
+             data.notes is string && data.notes.size() <= 500 &&
+             data.importSource is string && data.importSource.size() >= 1 && data.importSource.size() <= 30 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidCallLog(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.phoneNumber is string && data.phoneNumber.size() >= 1 && data.phoneNumber.size() <= 40 &&
+             data.contactName is string && data.contactName.size() >= 1 && data.contactName.size() <= 120 &&
+             data.direction is string && data.direction in ['INCOMING', 'OUTGOING', 'MISSED', 'INCOMING_SIMULATED'] &&
+             data.filterVerdict is string && data.filterVerdict in ['ALLOWED', 'VIP_BYPASS', 'SILENCED', 'BLOCKED'] &&
+             data.matchedRuleLabel is string && data.matchedRuleLabel.size() <= 120 &&
+             data.autoReplyDispatched is bool &&
+             data.durationSeconds is int && data.durationSeconds >= 0 && data.durationSeconds <= 86400 &&
+             data.timestamp is int && data.timestamp >= 0 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidFilterRule(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.label is string && data.label.size() >= 1 && data.label.size() <= 100 &&
+             data.pattern is string && data.pattern.size() >= 1 && data.pattern.size() <= 80 &&
+             data.matchType is string && data.matchType in ['PREFIX', 'CONTAINS', 'EXACT', 'REGEX'] &&
+             data.action is string && data.action in ['BLOCK', 'SILENCE', 'ALLOW'] &&
+             data.isEnabled is bool &&
+             data.blockedCount is int && data.blockedCount >= 0 &&
+             data.autoReplyText is string && data.autoReplyText.size() <= 300 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidMessage(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.phoneNumber is string && data.phoneNumber.size() >= 1 && data.phoneNumber.size() <= 40 &&
+             data.normalizedNumber is string && data.normalizedNumber.size() <= 30 &&
+             data.contactName is string && data.contactName.size() >= 1 && data.contactName.size() <= 120 &&
+             data.body is string && data.body.size() >= 1 && data.body.size() <= 1000 &&
+             data.timestamp is int && data.timestamp >= 0 &&
+             data.isOutgoing is bool &&
+             data.isAutoReply is bool &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidReplyTemplate(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             data.body is string && data.body.size() >= 1 && data.body.size() <= 500 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 40 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidShieldSettings(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.masterShieldEnabled is bool &&
+             data.blockUnknownCallers is bool &&
+             data.silenceUnknownCallers is bool &&
+             data.blockPrivateNumbers is bool &&
+             data.quietHoursEnabled is bool &&
+             data.quietStartHour is int && data.quietStartHour >= 0 && data.quietStartHour <= 23 &&
+             data.quietEndHour is int && data.quietEndHour >= 0 && data.quietEndHour <= 23 &&
+             data.vipBypassQuietHours is bool &&
+             data.defaultAutoReplyEnabled is bool &&
+             data.defaultAutoReplyText is string && data.defaultAutoReplyText.size() <= 300 &&
+             data.darkModeEnabled is bool &&
+             (!('keypadTonesEnabled' in data) || data.keypadTonesEnabled is bool) &&
+             (!('hapticsEnabled' in data) || data.hapticsEnabled is bool) &&
+             (!('preferInAppCallUi' in data) || data.preferInAppCallUi is bool) &&
+             (!('autoRouteBluetooth' in data) || data.autoRouteBluetooth is bool) &&
+             (!('defaultAudioRoute' in data) || (data.defaultAudioRoute is string && data.defaultAudioRoute in ['BLUETOOTH', 'EARPIECE', 'SPEAKER'])) &&
+             (!('preferredBluetoothDeviceName' in data) || (data.preferredBluetoothDeviceName is string && data.preferredBluetoothDeviceName.size() <= 100)) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    match /users/{userId} {
+      match /contacts/{contactId} {
+        allow get: if isOwner(userId) && isValidId(contactId) && existing().userId == request.auth.uid;
+        allow list: if isOwner(userId) && existing().userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(contactId) &&
+                         incoming().keys().hasAll(['userId', 'name', 'phoneNumber', 'normalizedNumber', 'label', 'email', 'organization', 'isVip', 'avatarColorIndex', 'notes', 'importSource', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'name', 'phoneNumber', 'normalizedNumber', 'label', 'email', 'organization', 'isVip', 'avatarColorIndex', 'notes', 'importSource', 'createdAt', 'updatedAt']) &&
+                         isValidContact(incoming());
+        allow update: if isOwner(userId) && isValidId(contactId) &&
+                         isValidContact(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phoneNumber', 'normalizedNumber', 'label', 'email', 'organization', 'isVip', 'avatarColorIndex', 'notes', 'importSource', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(contactId) && existing().userId == request.auth.uid;
+      }
+
+      match /callLogs/{logId} {
+        allow get: if isOwner(userId) && isValidId(logId) && existing().userId == request.auth.uid;
+        allow list: if isOwner(userId) && existing().userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(logId) &&
+                         incoming().keys().hasAll(['userId', 'phoneNumber', 'contactName', 'direction', 'filterVerdict', 'matchedRuleLabel', 'autoReplyDispatched', 'durationSeconds', 'timestamp', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'phoneNumber', 'contactName', 'direction', 'filterVerdict', 'matchedRuleLabel', 'autoReplyDispatched', 'durationSeconds', 'timestamp', 'createdAt', 'updatedAt']) &&
+                         isValidCallLog(incoming());
+        allow update: if isOwner(userId) && isValidId(logId) &&
+                         isValidCallLog(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['contactName', 'autoReplyDispatched', 'durationSeconds', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(logId) && existing().userId == request.auth.uid;
+      }
+
+      match /filterRules/{ruleId} {
+        allow get: if isOwner(userId) && isValidId(ruleId) && existing().userId == request.auth.uid;
+        allow list: if isOwner(userId) && existing().userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(ruleId) &&
+                         incoming().keys().hasAll(['userId', 'label', 'pattern', 'matchType', 'action', 'isEnabled', 'blockedCount', 'autoReplyText', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'label', 'pattern', 'matchType', 'action', 'isEnabled', 'blockedCount', 'autoReplyText', 'createdAt', 'updatedAt']) &&
+                         isValidFilterRule(incoming());
+        allow update: if isOwner(userId) && isValidId(ruleId) &&
+                         isValidFilterRule(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['label', 'pattern', 'matchType', 'action', 'isEnabled', 'blockedCount', 'autoReplyText', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(ruleId) && existing().userId == request.auth.uid;
+      }
+
+      match /messages/{messageId} {
+        allow get: if isOwner(userId) && isValidId(messageId) && existing().userId == request.auth.uid;
+        allow list: if isOwner(userId) && existing().userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(messageId) &&
+                         incoming().keys().hasAll(['userId', 'phoneNumber', 'normalizedNumber', 'contactName', 'body', 'timestamp', 'isOutgoing', 'isAutoReply', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'phoneNumber', 'normalizedNumber', 'contactName', 'body', 'timestamp', 'isOutgoing', 'isAutoReply', 'createdAt', 'updatedAt']) &&
+                         isValidMessage(incoming());
+        allow update: if isOwner(userId) && isValidId(messageId) &&
+                         isValidMessage(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['contactName', 'body', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(messageId) && existing().userId == request.auth.uid;
+      }
+
+      match /replyTemplates/{templateId} {
+        allow get: if isOwner(userId) && isValidId(templateId) && existing().userId == request.auth.uid;
+        allow list: if isOwner(userId) && existing().userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(templateId) &&
+                         incoming().keys().hasAll(['userId', 'title', 'body', 'category', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'title', 'body', 'category', 'createdAt', 'updatedAt']) &&
+                         isValidReplyTemplate(incoming());
+        allow update: if isOwner(userId) && isValidId(templateId) &&
+                         isValidReplyTemplate(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'body', 'category', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(templateId) && existing().userId == request.auth.uid;
+      }
+
+      match /settings/{settingId} {
+        allow get: if isOwner(userId) && isValidId(settingId) && existing().userId == request.auth.uid;
+        allow list: if isOwner(userId) && existing().userId == request.auth.uid;
+        allow create: if isOwner(userId) && isValidId(settingId) &&
+                         incoming().keys().hasAll(['userId', 'masterShieldEnabled', 'blockUnknownCallers', 'silenceUnknownCallers', 'blockPrivateNumbers', 'quietHoursEnabled', 'quietStartHour', 'quietEndHour', 'vipBypassQuietHours', 'defaultAutoReplyEnabled', 'defaultAutoReplyText', 'darkModeEnabled', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'masterShieldEnabled', 'blockUnknownCallers', 'silenceUnknownCallers', 'blockPrivateNumbers', 'quietHoursEnabled', 'quietStartHour', 'quietEndHour', 'vipBypassQuietHours', 'defaultAutoReplyEnabled', 'defaultAutoReplyText', 'darkModeEnabled', 'keypadTonesEnabled', 'hapticsEnabled', 'preferInAppCallUi', 'autoRouteBluetooth', 'defaultAudioRoute', 'preferredBluetoothDeviceName', 'createdAt', 'updatedAt']) &&
+                         isValidShieldSettings(incoming());
+        allow update: if isOwner(userId) && isValidId(settingId) &&
+                         isValidShieldSettings(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['masterShieldEnabled', 'blockUnknownCallers', 'silenceUnknownCallers', 'blockPrivateNumbers', 'quietHoursEnabled', 'quietStartHour', 'quietEndHour', 'vipBypassQuietHours', 'defaultAutoReplyEnabled', 'defaultAutoReplyText', 'darkModeEnabled', 'keypadTonesEnabled', 'hapticsEnabled', 'preferInAppCallUi', 'autoRouteBluetooth', 'defaultAudioRoute', 'preferredBluetoothDeviceName', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(settingId) && existing().userId == request.auth.uid;
+      }
+    }
+  }
+}

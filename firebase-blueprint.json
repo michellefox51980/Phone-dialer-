@@ -1,0 +1,142 @@
+{
+  "entities": {
+    "Contact": {
+      "title": "Contact",
+      "description": "User-owned contact record in ClarityDial directory, created manually or via full-screen vCard/CSV/System import.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "name": { "type": "string", "description": "Full display name (1..120 chars)." },
+        "phoneNumber": { "type": "string", "description": "Formatted phone number (1..40 chars)." },
+        "normalizedNumber": { "type": "string", "description": "Digits-only normalized phone number." },
+        "label": { "type": "string", "description": "Phone label (Mobile, Work, Home, Main, Medical)." },
+        "email": { "type": "string", "description": "Contact email address." },
+        "organization": { "type": "string", "description": "Company or organization name." },
+        "isVip": { "type": "boolean", "description": "Whether contact bypasses Quiet Hours and strict filters." },
+        "avatarColorIndex": { "type": "integer", "description": "Palette index for contact avatar." },
+        "notes": { "type": "string", "description": "User notes for this contact." },
+        "importSource": { "type": "string", "description": "Origin of contact (MANUAL, VCF_FILE, CSV_FILE, SYSTEM_PICKER, BATCH_PASTE, STARTER)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp of creation (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp of last update (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "name", "phoneNumber", "normalizedNumber", "label", "email", "organization", "isVip", "avatarColorIndex", "notes", "importSource", "createdAt", "updatedAt"]
+    },
+    "CallLog": {
+      "title": "CallLog",
+      "description": "Call history entry recording incoming, outgoing, missed, and filtered/blocked calls.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "phoneNumber": { "type": "string", "description": "Caller or recipient phone number." },
+        "contactName": { "type": "string", "description": "Resolved contact name or caller label." },
+        "direction": { "type": "string", "enum": ["INCOMING", "OUTGOING", "MISSED", "INCOMING_SIMULATED"], "description": "Call direction/type." },
+        "filterVerdict": { "type": "string", "enum": ["ALLOWED", "VIP_BYPASS", "SILENCED", "BLOCKED"], "description": "Automated call filter outcome." },
+        "matchedRuleLabel": { "type": "string", "description": "Name of the filter rule or status that applied." },
+        "autoReplyDispatched": { "type": "boolean", "description": "Whether an automated SMS reply was sent." },
+        "durationSeconds": { "type": "integer", "description": "Call duration in seconds." },
+        "timestamp": { "type": "integer", "description": "Client epoch milliseconds for UI sorting." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "phoneNumber", "contactName", "direction", "filterVerdict", "matchedRuleLabel", "autoReplyDispatched", "durationSeconds", "timestamp", "createdAt", "updatedAt"]
+    },
+    "FilterRule": {
+      "title": "FilterRule",
+      "description": "Automated call filter rule for specific phone numbers, prefixes, or regex patterns.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "label": { "type": "string", "description": "Descriptive rule name." },
+        "pattern": { "type": "string", "description": "Number, prefix, or regex pattern." },
+        "matchType": { "type": "string", "enum": ["PREFIX", "CONTAINS", "EXACT", "REGEX"], "description": "How the pattern matches incoming numbers." },
+        "action": { "type": "string", "enum": ["BLOCK", "SILENCE", "ALLOW"], "description": "Action taken when rule matches." },
+        "isEnabled": { "type": "boolean", "description": "Whether rule is currently active." },
+        "blockedCount": { "type": "integer", "description": "Number of calls matched by this rule." },
+        "autoReplyText": { "type": "string", "description": "Optional custom SMS reply for this rule." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "label", "pattern", "matchType", "action", "isEnabled", "blockedCount", "autoReplyText", "createdAt", "updatedAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Text message entry in a conversation thread.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "phoneNumber": { "type": "string", "description": "Formatted phone number." },
+        "normalizedNumber": { "type": "string", "description": "Normalized digits for thread grouping." },
+        "contactName": { "type": "string", "description": "Contact display name." },
+        "body": { "type": "string", "description": "Text message content." },
+        "timestamp": { "type": "integer", "description": "Epoch milliseconds." },
+        "isOutgoing": { "type": "boolean", "description": "True if sent by the user." },
+        "isAutoReply": { "type": "boolean", "description": "True if generated as an automated call filter reply." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "phoneNumber", "normalizedNumber", "contactName", "body", "timestamp", "isOutgoing", "isAutoReply", "createdAt", "updatedAt"]
+    },
+    "ReplyTemplate": {
+      "title": "ReplyTemplate",
+      "description": "Reusable quick-reply SMS template for call screening and messaging.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "title": { "type": "string", "description": "Short template title." },
+        "body": { "type": "string", "description": "Template message text." },
+        "category": { "type": "string", "description": "Template category (FILTER_REPLY, BUSY, CUSTOM)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "title", "body", "category", "createdAt", "updatedAt"]
+    },
+    "ShieldSettings": {
+      "title": "ShieldSettings",
+      "description": "Per-user automated call filtering and appearance preferences stored in Firestore.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "masterShieldEnabled": { "type": "boolean", "description": "Master switch for automated call filtering." },
+        "blockUnknownCallers": { "type": "boolean", "description": "Block numbers not saved in Contacts." },
+        "silenceUnknownCallers": { "type": "boolean", "description": "Silence numbers not saved in Contacts." },
+        "blockPrivateNumbers": { "type": "boolean", "description": "Block or silence private/withheld caller IDs." },
+        "quietHoursEnabled": { "type": "boolean", "description": "Whether Quiet Hours schedule is active." },
+        "quietStartHour": { "type": "integer", "description": "Start hour (0..23)." },
+        "quietEndHour": { "type": "integer", "description": "End hour (0..23)." },
+        "vipBypassQuietHours": { "type": "boolean", "description": "Allow VIP starred contacts to bypass filters and Quiet Hours." },
+        "defaultAutoReplyEnabled": { "type": "boolean", "description": "Offer auto-reply SMS for filtered calls." },
+        "defaultAutoReplyText": { "type": "string", "description": "Default SMS auto-reply message." },
+        "darkModeEnabled": { "type": "boolean", "description": "Whether Dark Slate mode is enabled." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp (FieldValue.serverTimestamp())." }
+      },
+      "required": ["userId", "masterShieldEnabled", "blockUnknownCallers", "silenceUnknownCallers", "blockPrivateNumbers", "quietHoursEnabled", "quietStartHour", "quietEndHour", "vipBypassQuietHours", "defaultAutoReplyEnabled", "defaultAutoReplyText", "darkModeEnabled", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/contacts/{contactId}": {
+      "schema": { "$ref": "#/entities/Contact" },
+      "description": "User's private contacts collection."
+    },
+    "/users/{userId}/callLogs/{logId}": {
+      "schema": { "$ref": "#/entities/CallLog" },
+      "description": "User's private call history and blocked call logs."
+    },
+    "/users/{userId}/filterRules/{ruleId}": {
+      "schema": { "$ref": "#/entities/FilterRule" },
+      "description": "User's custom automated call filter rules."
+    },
+    "/users/{userId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/Message" },
+      "description": "User's text messaging history and auto-replies."
+    },
+    "/users/{userId}/replyTemplates/{templateId}": {
+      "schema": { "$ref": "#/entities/ReplyTemplate" },
+      "description": "User's quick-reply SMS templates."
+    },
+    "/users/{userId}/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/ShieldSettings" },
+      "description": "User's global Call Shield settings document."
+    }
+  }
+}
